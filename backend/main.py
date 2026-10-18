@@ -1,8 +1,8 @@
 
 from fastapi import FastAPI, File, UploadFile 
 import pdfplumber
-from extract import extract_resume_data
-from schemas import ResumeData
+from extract import extract_resume_data  # for tekking groq what to extract
+from schemas import ResumeData   #for structure,shape of the text
 
 app=FastAPI()
 
@@ -25,10 +25,10 @@ def home():
 #     return {"text": all_text}
 
 
-@app.post("/extract", response_model=ResumeData)
-def extract_from_pdf(file: UploadFile):
+@app.post("/extract", response_model=ResumeData) # tells fastapi the shape of the endpoint(input) (connected schema here)
+def extract_from_pdf(file: UploadFile): #endpoint fn is called dont mis it with extract.py
     text = ""
-    with pdfplumber.open(file.file) as pdf:
+    with pdfplumber.open(file.file) as pdf: # extracting text with pdf plumber
         for page in pdf.pages:
             text += (page.extract_text() or "") + "\n"
-    return extract_resume_data(text)
+    return extract_resume_data(text) # the groq extracts info, validates with pydantic and return resumedata object
