@@ -1,10 +1,18 @@
 
-from fastapi import FastAPI, File, UploadFile 
+from fastapi import FastAPI, File, UploadFile , Form
 import pdfplumber
-from extract import extract_resume_data  # for tekking groq what to extract
-from schemas import ResumeData   #for structure,shape of the text
+from extract import extract_resume_data, extract_job_data  # for tekking groq what to extract
+from schemas import ResumeData, AnalysisResult#for structure,shape of the text
+from score import calculate_score
 
 app=FastAPI()
+
+def  read_pdf_text(upload: UploadFile)-> str:
+    text= ""
+    with pdfplumber.open(upload.file) as pdf:
+        for page in pdf.pages:
+            text += (page.extract_text() or "") + "\n"
+    return text
 
 @app.get("/")
 def home():
@@ -27,8 +35,11 @@ def home():
 
 @app.post("/extract", response_model=ResumeData) # tells fastapi the shape of the endpoint(input) (connected schema here)
 def extract_from_pdf(file: UploadFile): #endpoint fn is called dont mis it with extract.py
-    text = ""
-    with pdfplumber.open(file.file) as pdf: # extracting text with pdf plumber
-        for page in pdf.pages:
-            text += (page.extract_text() or "") + "\n"
-    return extract_resume_data(text) # the groq extracts info, validates with pydantic and return resumedata object
+    return extract_resume_data(read_pdf_text)
+
+@app.post("/analyze", response_model=AnalysisResult)
+def analyze(file:UploadFile, job_description: str= Form(...)): #Form(...) tells FastAPI that job_description arrives as a form field alongside the file. A file upload and plain text can travel in the same request.
+    resume = extract_resume_data(read_pdf_text(file))
+    job= extract_job_data(job_description)
+    return calculate_score(resume.skills,job.required_skills)
+    
