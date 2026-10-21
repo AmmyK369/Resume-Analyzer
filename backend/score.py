@@ -1,5 +1,22 @@
+ALIASES = {
+    "reactjs": "react",
+    "react.js": "react",
+    "rest api": "rest",
+    "rest apis": "rest",
+    "restapi": "rest",
+    "restapis": "rest",
+    "restful api": "rest",
+    "js": "javascript",
+    "postgres": "postgresql",
+    "cpp": "c++",
+    "ml": "machine learning",
+    "dsa": "data structures and algorithms",
+    "sql":"structured query language"
+}
+
 def normalize(skill:str)->str:
-    return skill.strip().lower()
+    cleaned= skill.strip().lower()
+    return ALIASES.get(cleaned,cleaned)
 
 def calculate_score(resume_skills:list[str],required_skills: list[str]) -> dict:
     resume_set={normalize (s) for s in resume_skills}

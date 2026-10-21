@@ -23,7 +23,7 @@ def  read_pdf_text(upload: UploadFile)-> str:
             status_code=422,
             detail="No text found in the pdf.Scanned or image-only PDFs are not supported.",
         )
-        return text
+    return text
 
 @app.get("/")
 def home():
@@ -46,7 +46,8 @@ def home():
 
 @app.post("/extract", response_model=ResumeData) # tells fastapi the shape of the endpoint(input) (connected schema here)
 def extract_from_pdf(file: UploadFile): #endpoint fn is called dont mis it with extract.py
-    return extract_resume_data(read_pdf_text)
+    text = read_pdf_text(file)
+    return extract_resume_data(text)
 
 @app.post("/analyze", response_model=AnalysisResult)
 def analyze(file:UploadFile, job_description: str= Form(...)): #Form(...) tells FastAPI that job_description arrives as a form field alongside the file. A file upload and plain text can travel in the same request.

@@ -9,6 +9,21 @@ client=Groq(api_key=os.getenv("GROQ_API_KEY"))
 # The underscore in _ask_llm is 
 # a Python convention meaning “internal helper, used only inside this file”.
 
+SKILL_RULES = """
+Extract only skills explicitly stated or clearly supported by the text.
+Normalize equivalent names to these common forms:
+- ReactJS, React.js -> react
+- REST API, REST APIs, RESTful APIs -> rest
+- Postgres, PostgreSQL -> postgresql
+- JS -> javascript
+- Cpp, CPP -> c++
+- ML -> machine learning
+- SQL, structured query language -> sql
+
+Use lowercase names, remove duplicates, and return one name per skill.
+Do not invent skills that are not supported by the input.
+"""
+
 def _ask_llm(system_prompt: str, user_text: str) ->str:
     response=client.chat.completions.create(
         model="openai/gpt-oss-120b",
@@ -17,33 +32,15 @@ def _ask_llm(system_prompt: str, user_text: str) ->str:
             {"role":"user", "content":user_text}
         ],
         response_format={"type":"json_object"},
+        temperature=0
     )
     return response.choices[0].message.content
 
 def extract_resume_data(resume_text:str)-> ResumeData: 
-    #takes string returns resumedata object
-    # response=client.chat.completions.create( # resume text is the user msgs
-    
-    # code:
-    #     model="openai/gpt-oss-120b",  
-    #     messages=[
-    #         {
-    #             "role":"system",
-    #             "content":"You extract data from resumes. Return only JSON with keys: skills (list of strings), education (string).",
-                
-    #         },
-    #         {
-    #             "role":"user",
-    #             "content":resume_text
-    #         },
-    #     ],
-    #     response_format={"type":"json_object"},
-        
-    # )
-    # raw_json=response.choices[0].message.content
-    
+
     raw_json= _ask_llm(
-        "You extract data from resumes. Return only JSON with keys: skills (list of strings), education (string).",
+        "You extract data from resumes. Return only JSON with keys: skills (list of strings), education (string)."
+        + SKILL_RULES,
         resume_text,
     )
     return ResumeData.model_validate_json(raw_json) #if valid returns resumedata object
@@ -51,7 +48,8 @@ def extract_resume_data(resume_text:str)-> ResumeData:
 
 def extract_job_data(job_text: str) ->JobData:
     raw_json = _ask_llm(
-        "You extract required skills from job descriptions. Return only JSON with key: required_skills (list of strings).",
+        "You extract required skills from job descriptions. Return only JSON with key: required_skills (list of strings)."
+        + SKILL_RULES,
         job_text,
     )
     
